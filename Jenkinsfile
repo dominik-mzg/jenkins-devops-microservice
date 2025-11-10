@@ -7,6 +7,9 @@ pipeline {
     }
 
     environment{
+        // Linia 'dockerHome = tool 'myDocker'' została usunięta, ponieważ powodowała błąd składniowy.
+        // Ustawienie DOCKER_HOST jest tutaj, ale zostanie nadpisane przez withEnv w stages,
+        // co jest niezbędne do rozwiązania błędu certyfikatów.
         DOCKER_HOST = 'tcp://localhost:2375'
         DOCKER_TLS_VERIFY = '0'
         DOCKER_CERT_PATH = ''
@@ -47,16 +50,22 @@ pipeline {
 
         stage('Build Docker Image'){
             steps{
-                sh "docker build -t dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} ."
-                sh "docker tag dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} dominikmzgg/currency-exchange-devops:latest"
+                // Wymuszamy wyczyszczenie błędnej ścieżki i użycie połączenia TCP dla Dockera
+                withEnv(["DOCKER_HOST=tcp://localhost:2375", "DOCKER_TLS_VERIFY=0", "DOCKER_CERT_PATH="]) {
+                    sh "docker build -t dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} ."
+                    sh "docker tag dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} dominikmzgg/currency-exchange-devops:latest"
+                }
             }
         }
         stage('Push Docker Image'){
             steps{
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
-                    sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin"
-                    sh "docker push dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER}"
-                    sh "docker push dominikmzgg/currency-exchange-devops:latest"
+                // Wymuszamy wyczyszczenie błędnej ścieżki i użycie połączenia TCP dla Dockera
+                withEnv(["DOCKER_HOST=tcp://localhost:2375", "DOCKER_TLS_VERIFY=0", "DOCKER_CERT_PATH="]) {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin"
+                        sh "docker push dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER}"
+                        sh "docker push dominikmzgg/currency-exchange-devops:latest"
+                    }
                 }
             }
         }

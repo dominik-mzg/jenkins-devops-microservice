@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment{
-        dockerHome = tool 'myDocker'
         DOCKER_HOST = 'tcp://localhost:2375'
         DOCKER_TLS_VERIFY = '0'
         DOCKER_CERT_PATH = ''
@@ -48,23 +47,17 @@ pipeline {
 
         stage('Build Docker Image'){
             steps{
-                //docker build -t dominikmzgg/currency-exchange-devops:$env.BUILD_NUMBER
-                script {
-                    withEnv(["DOCKER_HOST=tcp://localhost:2375", "DOCKER_TLS_VERIFY=0", "DOCKER_CERT_PATH="]) {
-                         dockerImage = docker.build("dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER}")
-                }
+                sh "docker build -t dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} ."
+                sh "docker tag dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER} dominikmzgg/currency-exchange-devops:latest"
             }
-        }
         }
         stage('Push Docker Image'){
             steps{
-                script {
-                    docker.withRegistry('', 'dockerhub') {
-                        dockerImage.push()
-                        dockerImage.push('latest')
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+                    sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin"
+                    sh "docker push dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER}"
+                    sh "docker push dominikmzgg/currency-exchange-devops:latest"
                 }
-                
             }
         }
     } 
@@ -81,4 +74,3 @@ pipeline {
         }
     }
 }
-

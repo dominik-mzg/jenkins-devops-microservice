@@ -8,6 +8,7 @@ pipeline {
 
     environment{
         dockerHome = tool 'myDocker'
+        DOCKER_HOST = 'tcp://localhost:2375'
         DOCKER_TLS_VERIFY = '0'
         DOCKER_CERT_PATH = ''
     }

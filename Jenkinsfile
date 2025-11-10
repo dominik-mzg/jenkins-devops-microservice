@@ -79,4 +79,5 @@ pipeline {
             echo "Uruchomione w przypadku błędu"
         }
     }
+    }
 }

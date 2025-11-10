@@ -15,27 +15,51 @@ pipeline {
             steps{
                 sh 'mvn --version'
                 sh 'docker --version'
-                echo "Zaczynamy kompilację"
-                echo "Numer kompilacji = $env.BUILD_NUMBER"
-                echo "Nazwa Zadania = $env.JOB_NAME"
+                echo "BUILD_NUMBER = $env.BUILD_NUMBER"
+                echo "JOB_NAME = $env.JOB_NAME"
             }
         }
         
-        stage('Kompilacja'){
+        stage('Compile'){
             steps{
                 sh "mvn clean compile"
             }
         }
 
-        stage('Testy Jednostkowe'){
+        stage('Test'){
             steps{
                 sh "mvn test"
             }
         }
         
-        stage('Testy Integracyjne'){
+        stage('Integration Test '){
             steps{
                 sh "mvn failsafe:integration-test failsafe:verify"
+            }
+        }
+        stage('Package'){
+            steps{
+                sh "mvn package -DskipTests"
+            }
+        }
+
+        stage('Build Docker Image'){
+            steps{
+                //docker build -t dominikmzgg/currency-exchange-devops:$env.BUILD_NUMBER
+                script {
+                    dockerImage = docker.build("dominikmzgg/currency-exchange-devops:${env.BUILD_NUMBER}")
+                }
+            }
+        }
+        stage('Push Docker Image'){
+            steps{
+                script {
+                    docker.withRegistry('', 'dockerhub') {
+                        dockerImage.push()
+                        dockerImage.push('latest')
+                    }
+                }
+                
             }
         }
     } 

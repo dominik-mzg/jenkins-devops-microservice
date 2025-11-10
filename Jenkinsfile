@@ -8,6 +8,8 @@ pipeline {
 
     environment{
         dockerHome = tool 'myDocker'
+        DOCKER_TLS_VERIFY = ''
+        DOCKER_CERT_PATH = ''
     }
     
     stages {

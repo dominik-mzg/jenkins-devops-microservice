@@ -67,6 +67,7 @@ pipeline {
             }
         }
     } 
+    }
     
     post{
         always{
@@ -79,5 +80,5 @@ pipeline {
             echo "Uruchomione w przypadku błędu"
         }
     }
-    }
 }
+

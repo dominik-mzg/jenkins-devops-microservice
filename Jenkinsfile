@@ -2,7 +2,8 @@ pipeline {
     agent any 
     
     tools {
-        maven 'myMaven'
+        maven 'myMaven' 
+        jdk 'jdk8' 
     }
 
     environment{
@@ -10,29 +11,29 @@ pipeline {
     }
     
     stages {
-        stage('Checkout'){
+        stage('Weryfikacja Narzędzi'){
             steps{
                 sh 'mvn --version'
                 sh 'docker --version'
-                echo "Build"
-                echo "BUILD_NUMBER = $env.BUILD_NUMBER"
-                echo "JOB_NAME = $env.JOB_NAME"
+                echo "Zaczynamy kompilację"
+                echo "Numer kompilacji = $env.BUILD_NUMBER"
+                echo "Nazwa Zadania = $env.JOB_NAME"
             }
         }
         
-        stage('Compile'){
+        stage('Kompilacja'){
             steps{
                 sh "mvn clean compile"
             }
         }
 
-        stage('Test'){
+        stage('Testy Jednostkowe'){
             steps{
                 sh "mvn test"
             }
         }
         
-        stage('Integration Test'){
+        stage('Testy Integracyjne'){
             steps{
                 sh "mvn failsafe:integration-test failsafe:verify"
             }
@@ -41,13 +42,13 @@ pipeline {
     
     post{
         always{
-            echo "I run always"
+            echo "Zawsze uruchomione"
         }
         success{
-            echo "I run when successful"
+            echo "Uruchomione w przypadku sukcesu"
         }
         failure{
-            echo "I run when failed"
+            echo "Uruchomione w przypadku błędu"
         }
     }
 }
